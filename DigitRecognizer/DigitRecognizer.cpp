@@ -3,7 +3,7 @@
 #include "stdafx.h"
 #define _USE_MATH_DEFINES
 #include <cmath>
-#include <iostream>;
+#include <iostream>
 #include <fstream>
 #include <string>
 #include <typeinfo>
@@ -17,43 +17,13 @@ double THRESHOLD_CONSTANT = 10;
 int FRAME_SIZE = 320;
 
 vector<float> v, temp, noise;
-ofstream myfile;
-double a[100][100];
-double E[100];
-double k[100];
+ofstream logfile;
 
-void durbin(int p, vector<double> r){
-	//the algorithm starts here
-	E[0] = r[0];
-	for (int i = 1; i <= p; i++){
-		if (i == 1){
-			//cout << "Rn[1] "<<Rn[1]<<endl;
-			k[1] = r[1] / E[0];
-			//cout <<"k[1] " <<k[1]<<endl;
-		}
-		else{
-			double term2 = 0;
-			for (int j = 1; j <= i - 1; j++){
-				term2 = term2 + a[j][i - 1] * r[i - j];
-			}
-			//cout <<"term2 "<< term2<<endl;
-			k[i] = (r[i] - term2) / E[i - 1];
-			//cout <<"k["<<i<<"]: " <<k[i]<<endl;
-		}
-		a[i][i] = k[i];
-		//cout <<"a["<<i<<"]["<<i<<"] "<<a[i][i]<<endl;
-		for (int j = 1; j <= i - 1; j++){
-			a[j][i] = (a[j][i - 1] - k[i] * a[i - j][i - 1]);
-			//cout <<"a["<<j<<"]["<<i<<"] "<<a[i][i]<<endl;
-		}
-		E[i] = (1 - pow(k[i], 2))*E[i - 1];
-		//cout << "E["<<i<<"] " <<E[i]<<endl;
-	}
-}
-
-// Given a frame of 320 samples, find Ri,ai,ci
-void find_cepstral(vector<float> frame){
+// Given a frame of 320 samples, return ci (find Ri,ai,ci)
+vector<double> find_cepstral(vector<double> frame){
 	vector<double> R, c;
+	vector<vector<double>> a(100, vector<double> (100, 0));
+	vector<double> E(100, 0);
 	for (int i = 0; i <= 12; i++){
 		R.push_back(1);
 	}
@@ -64,17 +34,44 @@ void find_cepstral(vector<float> frame){
 	// Find auto-correlation co-efficients
 	for (int m = 0; m <= 12; m++){
 		R[m] = 0;
-		for (int n = 0; n < (320 - 1 - m); n++){
+		for (int n = 0; n < (FRAME_SIZE - 1 - m); n++){
 			R[m] += frame[n] * frame[n + m];
 		}
 	}
 
-	//
 
+	double K[100];
 	int p = 12;
 	E[0] = R[0];
 	for (int i = 1; i < (p + 1); i++){
-		durbin(i, R);
+		//DURBIN(i, R, a, E);
+		//the algorithm starts here
+		E[0] = R[0];
+		for (int j = 1; j <= i; j++){
+			if (j == 1){
+				//cout << "Rn[1] "<<Rn[1]<<endl;
+				K[1] = R[1] / E[0];
+				//cout <<"k[1] " <<k[1]<<endl;
+			}
+			else{
+				double term2 = 0;
+				for (int k = 1; k <= j - 1; k++){
+					term2 = term2 + a[k][j - 1] * R[j - k];
+				}
+				//cout <<"term2 "<< term2<<endl;
+				K[j] = (R[j] - term2) / E[j - 1];
+				//cout <<"k["<<i<<"]: " <<k[i]<<endl;
+			}
+			a[j][j] = K[j];
+			//cout <<"a["<<i<<"]["<<i<<"] "<<a[i][i]<<endl;
+			for (int k = 1; k <= j - 1; k++){
+				a[k][j] = (a[k][j - 1] - K[j] * a[j - k][j - 1]);
+				//cout <<"a["<<j<<"]["<<i<<"] "<<a[i][i]<<endl;
+			}
+			E[j] = (1 - pow(K[j], 2))*E[j - 1];
+			//cout << "E["<<i<<"] " <<E[i]<<endl;
+		}
+		//the algorithm ends here
 	}
 
 	for (int i = 1; i < (p + 1); i++){
@@ -100,19 +97,19 @@ void find_cepstral(vector<float> frame){
 	}
 
 	// print output c[i]
-	cout << endl << "Cepstral co-efficients : " << endl;
+	//cout << endl << "Cepstral co-efficients : " << endl;
 	for (int i = 0; i < c.size(); i++){
-		cout << std::fixed << std::setprecision(18) << c[i] << endl;
+		//cout << std::fixed << std::setprecision(18) << c[i] << endl;
 	}
 
 
 	for (int i = 0; i < c.size(); i++){
-		myfile << std::fixed << std::setprecision(18) << c[i] << ",";
+		//myfile << std::fixed << std::setprecision(18) << c[i] << ",";
 	}
-	myfile << "\n";
+	//myfile << "\n";
 
+	return c;
 }
-
 
 // returns float energy_avg per frame(320 samples per frame) of v.size() samples
 double calculate_energy(vector<double> v){
@@ -279,14 +276,53 @@ vector<vector<double>> frame_generator(string filename, string noise_filename, i
 
 vector<vector<double>> hamming_window_applier(vector<vector<double>> frames){
 	vector<vector<double>> new_frames;
-
+	double w_m;
+	int M = FRAME_SIZE, m;
+	vector<double> temp;
+	for (int i = 0; i < frames.size(); i++){
+		for (int j = 0; j < frames[i].size(); j++){
+			m = j % M;
+			w_m = 0.54 - 0.46*cos(2 * M_PI * m / M);
+			temp.push_back(frames[i][j] * w_m);
+		}
+		new_frames.push_back(temp);
+		temp.clear();
+	}
 	return new_frames;
 }
 
 vector<vector<double>> cepstral_generator(vector<vector<double>> frames){
-	vector<vector<double>> c;
+	vector<vector<double>> c, hammed_frames;
 
+	// Apply hamming window
+	cout << endl << "Applying hamming window over all voice frames . . ." << endl;
+ 	hammed_frames = hamming_window_applier(frames);
+
+	cout << endl << "Generating cepstral coefficients . . ." << endl;
+	for (int i = 0; i < hammed_frames.size(); i++){
+		c.push_back(find_cepstral(hammed_frames[i]));
+	}
+	cout << "Generated cepstral coefficients." << endl << endl;
 	return c;
+}
+
+int write_2d_csv_log(vector<vector<double>> data, string filename){
+	ofstream logstream;
+	logstream.open(filename);
+	logstream.precision(30);
+	if (logstream){
+		for (int i = 0; i < data.size(); i++){
+			for (int j = 0; j < data[i].size(); j++){
+				logstream << std::fixed << std::setprecision(30) << data[i][j] << ", ";
+			}
+			logstream << "\n";
+		}
+		logstream.close();
+		return 1;
+	}
+	else {
+		return 0;
+	}
 }
 
 int recognize(string filename){
@@ -295,10 +331,14 @@ int recognize(string filename){
 	int noise_frame_count = 3; // If noise_filename is not found, few initial frames of original file will be used as noise reference
 	frames = frame_generator(filename, noise_filename, noise_frame_count);
 	if (frames.size() < 5){
-		cout << endl << "RECOGNITION FAILED :: recognize :: Minimum frame limits reached :: frame_generator output size is too low" << endl;
+		cout << endl << "RECOGNITION FAILED :: recognize :: Minimum frame limits reached :: frame_generator output size is too low" << endl << endl;
 		return 0;
 	}
-	//cepstral = cepstral_generator(frames);
+	cepstral = cepstral_generator(frames);
+	cout << endl << "Writing cepstral coefficient to recognition_cepstral.csv . . ." << endl;
+	write_2d_csv_log(cepstral, "recognition_cepstral.csv");
+
+
 	return 0;
 }
 
@@ -332,84 +372,6 @@ int _tmain(int argc, _TCHAR* argv[])
 	string filename1, filename2;
 	char data[100];
 	int x;
-
-	cout << endl << "NOTE : " << endl;
-	cout << "Input file should be generated using cooledit. Initial 3 seconds of the recording should contain only noise." << endl;
-	cout << endl << "Enter filename to open : eg. \"a.txt\"" << endl;
-	cin >> filename2;
-	cout << endl << "Enter filename to save output : eg. \"output_a.csv\"" << endl;
-	cin >> filename1;
-	cout << endl << "Enter initial second count of noise : eg. \"3\"" << endl;
-	cin >> x;
-	ifstream infile2;
-	infile2.open(filename2);
-	if (infile2){
-	cout << "Reading from the file" << endl;
-	// ignore first 10 lines
-	for (int i = 0; i < 10; i++){
-	infile2 >> data;
-	}
-
-	int max_data = 0;
-	while (infile2 >> data){
-	if (abs(stoi(data)) > max_data)
-	max_data = abs(stoi(data));
-	}
-	infile2.close();
-	norm_coeff = (float)NORM_CONSTANT / (float)max_data;
-	cout << endl << "Normalization co-efficient : " << norm_coeff << endl;
-
-	infile2.open(filename2);
-	// ignore first 10 lines
-	for (int i = 0; i < 10; i++){
-	infile2 >> data;
-	}
-
-	// x frames of 320 samples selected as noise
-	for (int i = 0; i < x * 320; i++){
-	infile2 >> data;
-	noise.push_back((float)((stoi(data) - dc_coeff) * norm_coeff));
-	}
-
-	noise_energy_avg = calculate_energy(noise);
-	noise_zcr_avg = calculate_zcr(noise);
-	energy_threshold = THRESHOLD_CONSTANT * noise_energy_avg;
-	zcr_threshold = THRESHOLD_CONSTANT * noise_zcr_avg;
-	cout << endl << "Noise average energy per frame : " << (int)noise_energy_avg << endl;
-	cout << endl << "Noise average ZCR per frame : " << noise_zcr_avg << endl;
-	cout << endl << "Energy threshold : " << (int)energy_threshold << endl;
-	cout << endl << "ZCR threshold : " << zcr_threshold << endl;
-
-	int sample_count = 1;
-	int frame_count = 2;
-	while (infile2 >> data){
-	temp.push_back((float)((stoi(data) - dc_coeff) * norm_coeff));
-	sample_count++;
-	if (sample_count == 320){
-	if (calculate_energy(temp) > energy_threshold){
-	v.insert(v.end(), temp.begin(), temp.end());
-	cout << "Frame no : " << frame_count << "  Energy over threshold. Energy = " << calculate_energy(temp) << " ; ZCR = " << calculate_zcr(temp) << endl;
-	}
-	else {
-	if (calculate_zcr(temp) > zcr_threshold){
-	v.insert(v.end(), temp.begin(), temp.end());
-	cout << "Frame no : " << frame_count << "  ZCR over threshold. Energy = " << calculate_energy(temp) << " ; ZCR = " << calculate_zcr(temp) << endl;
-	}
-	else{
-	cout << "Frame no : " << frame_count << "  Low energy and ZCR. Energy = " << calculate_energy(temp) << " ; ZCR = " << calculate_zcr(temp) << endl;
-	}
-	}
-	temp.clear();
-	sample_count = 1;
-	frame_count++;
-	}
-	}
-	infile2.close();
-
-	}
-	else {
-	cout << "No such file exists! Please check the directory.";
-	}
 
 
 	cout << endl << "SAVING OUTPUT . . ." << endl;
