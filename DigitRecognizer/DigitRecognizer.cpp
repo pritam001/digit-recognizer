@@ -6,12 +6,16 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <sstream>
 #include <typeinfo>
 #include <vector>
 #include <math.h>
+#include <random>
 #include <iomanip>
+#include <ios>
 using namespace std;
 
+#define MAX_DISTORTION 9999
 int NORM_CONSTANT = 10000;
 double THRESHOLD_CONSTANT = 10;
 int FRAME_SIZE = 320;
@@ -313,7 +317,7 @@ int write_2d_csv_log(vector<vector<double>> data, string filename){
 	if (logstream){
 		for (int i = 0; i < data.size(); i++){
 			for (int j = 0; j < data[i].size(); j++){
-				logstream << std::fixed << std::setprecision(30) << data[i][j] << ", ";
+				logstream << std::fixed << std::setprecision(30) << data[i][j] << ",";
 			}
 			logstream << "\n";
 		}
@@ -325,8 +329,270 @@ int write_2d_csv_log(vector<vector<double>> data, string filename){
 	}
 }
 
+//find euclidean distance between "a" and "b" vector with a.size() = b.size() = dimension
+double distance(vector<double> a, vector<double> b, int dimension){
+	double distance = 0;
+	for (int i = 0; i < dimension; i++){
+		distance += (a[i] - b[i])*(a[i] - b[i]);
+	}
+	return sqrt(distance);
+}
+
+//codebook = stores all the M centroids :: vector<vector<double>>
+//training_set = contains all L cepstral vectors :: vector<vector<double>>
+//dimension = dimension of cepstral vector inputs, generally 12 :: int
+//prev_loop_distortion = avg_dist in previous loop :: double
+//threshold = Stop when average distance falls below preset threshold :: double
+//max_loop - loop_count = remaining iteration count after which KMeans will stop :: int
+//loop_count = current loop number :: int
+vector<vector<double>> KMeans(vector<vector<double>> codebook, vector<vector<double>> training_set, int dimension, double prev_loop_distortion, double threshold, int max_loop, int loop_count){
+	int M = codebook.size();
+	int L = training_set.size();
+	double min_distance = 9999;
+	double avg_dist = 0;
+	vector<vector<double>> new_codebook = codebook;
+	vector<vector<vector<double>>> cluster;
+
+	//initialize clusters
+	for (int i = 0; i < M; i++){
+		vector<double> temp_c;
+		vector<vector<double>> temp_i;
+		temp_c.push_back((double)i);
+		temp_i.push_back(temp_c);
+		cluster.push_back(temp_i);
+	}
+
+	//find min distance and assign clusters
+	for (int i = 0; i < L; i++){
+		int min_codeword = 0;
+		min_distance = 9999;
+		for (int j = 0; j < M; j++){
+			double curr_distance = distance(training_set[i], new_codebook[j], dimension);
+			if (curr_distance < min_distance){
+				min_distance = curr_distance;
+				min_codeword = j;
+			}
+		}
+
+		//assign cluster for training_set[i]
+		vector<vector<double>> temp_i;
+		for (int i = 0; i < cluster[min_codeword].size(); i++){
+			temp_i.push_back(cluster[min_codeword][i]);
+		}
+		temp_i.push_back(training_set[i]);
+		cluster[min_codeword] = temp_i;
+	}
+
+	//store total minimum distance for each cluster
+	double total_distance = 0;
+	//for each cluster find new centroid
+	for (int i = 0; i < M; i++){
+		vector<double> new_centroid = new_codebook[i];
+		min_distance = 9999;
+		//find min distance
+		for (int j = 1; j < cluster[i].size(); j++){
+			double curr_distance = 0;
+			for (int k = 1; k < cluster[i].size(); k++){
+				curr_distance += distance(cluster[i][j], cluster[i][k], dimension);
+			}
+			if (curr_distance < min_distance){
+				min_distance = curr_distance;
+				new_centroid = cluster[i][j];
+			}
+		}
+		//assign new centroid
+		new_codebook[i] = new_centroid;
+		if (min_distance == 9999){
+			min_distance = 0;
+		}
+		total_distance += min_distance;
+	}
+
+	avg_dist = total_distance / (double)training_set.size();
+
+	// Generate Log file
+	// log file should contain the various intermediate outputs like the no. of vectors that are allotted
+	// to each cluster as you go through the algorithm. Also the distortion for the current codebook at that time.
+	ofstream outfile;
+	outfile.open("log_" + to_string(codebook.size()) + "_" + to_string(loop_count) + ".txt");
+	outfile.precision(18);
+	outfile << "Distortion for the current codebook : " << avg_dist << endl;
+	for (int i = 0; i < M; i++){
+		outfile << "Cluster " << (i + 1) << " elements : " << endl;
+		for (int j = 1; j < cluster[i].size(); j++){
+			for (int k = 1; k < cluster[i][j].size(); k++){
+				outfile << cluster[i][j][k] << ",";
+			}
+			outfile << endl;
+		}
+		outfile << endl;
+
+	}
+	outfile.close();
+
+
+	//print output
+	ofstream graphfile;
+	graphfile.precision(18);
+	//std::cout.precision(18);
+	graphfile.open("graph.csv", ios::app);
+	cout << "KMeans loop -> " << loop_count << "| average distance = " << (float)avg_dist << " | threshold = " << (int)threshold << endl;
+	graphfile << codebook.size() << "," << (float)avg_dist << "\n";
+	graphfile.close();
+
+	// if avg_dist is less than threshold or same as previous loop, then return
+	if (avg_dist < threshold){
+		cout << "AVERAGE DISTORTION IS LESS THAN THRESHOLD." << endl;
+		return new_codebook;
+	}
+	else if (avg_dist == prev_loop_distortion){
+		cout << "AVERAGE DISTORTION IS SAME AS PREVIOUS LOOP." << endl;
+		return new_codebook;
+	}
+	else if (loop_count >= max_loop){
+		cout << "MAX LOOP COUNT EXCEEDED!" << endl;
+		return new_codebook;
+	}
+	else {
+		//iterate KMeans with newly generated codebook
+		new_codebook = KMeans(new_codebook, training_set, dimension, avg_dist, threshold, max_loop, loop_count + 1);
+		return new_codebook;
+	}
+}
+
+vector<double> split_vector(vector<double> v, double epsilon){
+	vector<double> new_v;
+	for (int i = 0; i < v.size(); i++){
+		new_v.push_back((double)(((double)1 + epsilon)*v[i]));
+	}
+	return new_v;
+}
+
+//codebook = stores all the M centroids :: vector<vector<double>>
+//training_set = contains all L cepstral vectors :: vector<vector<double>>
+//dimension = dimension of cepstral vector inputs, generally 12 :: int
+//M = Upper limit of codebook size :: int
+//epsilon = splitting parameter :: double
+//threshold = Stop when average distance falls below preset threshold :: double
+//max_loop = max iteration count after which KMeans will stop :: int
+//LBG_loop_count = LBG loop number :: int
+vector<vector<double>> LBG(vector<vector<double>> codebook, vector<vector<double>> training_set, int dimension, int M, double epsilon, double threshold, int max_loop, int LBG_loop_count){
+	int m = codebook.size();
+	int L = training_set.size();
+	double min_distance = 9999, total_distance = 0;
+	double curr_distortion = 0;
+	vector<vector<double>> new_codebook, split_codebook;
+
+	for (int i = 0; i < training_set.size(); i++){
+		min_distance = 9999;
+		//find min distance
+		for (int j = 0; j < codebook.size(); j++){
+			double curr_distance = distance(training_set[i], codebook[j], dimension);
+			if (curr_distance < min_distance){
+				min_distance = curr_distance;
+			}
+		}
+		//assign new centroid
+		total_distance += min_distance;
+	}
+
+	curr_distortion = total_distance / (double)training_set.size();
+
+	ofstream graphfile;
+	graphfile.precision(18);
+	graphfile.open("graph.csv", ios::app);
+	graphfile << codebook.size() << "," << (float)curr_distortion << "\n";
+	graphfile.close();
+
+	cout << endl << "Starting LBG :: Loop " << LBG_loop_count << " :: Codebook size = " << m << endl << endl;
+	new_codebook = KMeans(codebook, training_set, dimension, MAX_DISTORTION, threshold, max_loop, 1);
+
+	// Generate codebook_[i].csv for current codebook size
+	ofstream outfile;
+	outfile.open("codebook_" + to_string(codebook.size()) + ".csv");
+	outfile.precision(18);
+	for (int i = 0; i < codebook.size(); i++){
+		for (int j = 0; j < codebook[0].size(); j++){
+			outfile << codebook[i][j] << ",";
+		}
+		outfile << "\n";
+	}
+	outfile.close();
+
+	if (m >= M){
+		return new_codebook;
+	}
+
+	// Split the codebook in twice size
+	cout << endl << "Splitting codebook :: Current codebook size = " << m << endl;
+	for (int i = 0; i < new_codebook.size(); i++){
+		split_codebook.push_back(split_vector(new_codebook[i], epsilon));
+		split_codebook.push_back(split_vector(new_codebook[i], (double)(-1 * epsilon)));
+	}
+	cout << "Codebook split :: New codebook size = " << split_codebook.size() << endl;
+
+	// Recurse LBG for split_codebook
+	new_codebook = LBG(split_codebook, training_set, dimension, M, epsilon, threshold, max_loop, LBG_loop_count + 1);
+
+	return new_codebook;
+}
+
+vector<vector<double>> codebook_generator(vector<vector<double>> cepstral){
+	cout << endl << "INITIATING CODEBOOK GENERATION :: LBG" << endl;
+	int M = 32; //maximum number of codebook vectors
+	double threshold = (double)0.01;
+	double epsilon = (double)0.03;
+	int max_loop = 10;
+	vector<vector<double>> training_data, init_centroid, codebook;
+	
+	// cepstral contains c[0] to c[18]; remove c[0], c[13], ... , c[18]
+	vector<double> modified_c;
+	for (int i = 0; i < cepstral.size(); i++){
+		//refine ci vector
+		for (int j = 1; j <= 12; j++){
+			modified_c.push_back(cepstral[i][j]);
+		}
+		//push_back training data
+		training_data.push_back(modified_c);
+		modified_c.clear();
+	}
+	cout << endl << "Generated training data." << endl;
+	write_2d_csv_log(training_data, "recog_training_data.csv");
+
+	//equally likely random centroid generation
+	cout << endl << "SELECTING AN INITIAL RANDOM CENTROID . . ." << endl;
+	std::random_device rd; // obtain a random number from hardware
+	std::mt19937 eng(rd()); // seed the generator
+	std::uniform_int_distribution<> distr(0, training_data.size() - 1); // define the range
+	init_centroid.push_back(training_data[distr(eng)]);
+
+	//k-means & LBG
+	ofstream outfile, graphfile;
+	outfile.open("codebook.csv");
+	outfile.precision(18);
+	graphfile.open("graph.csv");
+	graphfile << "";
+	graphfile.close();
+	cout << endl << "STARTING LBG ALGORITHM . . ." << endl;
+	codebook = LBG(init_centroid, training_data, training_data[0].size(), M, epsilon, threshold, max_loop, 1);
+	cout << endl << "PRINTING FINAL CODEBOOK . . ." << endl << endl;
+	for (int i = 0; i < codebook.size(); i++){
+		for (int j = 0; j < codebook[0].size(); j++){
+			//cout << codebook[i][j] << " ";
+			outfile << codebook[i][j] << ",";
+		}
+		//cout << endl;
+		outfile << "\n";
+	}
+	outfile.close();
+
+
+	return codebook;
+}
+
 int recognize(string filename){
-	vector<vector<double>> frames, cepstral;
+	vector<vector<double>> frames, cepstral, codebook;
+	vector<int> observation_sequence;
 	string noise_filename = "noise.txt";
 	int noise_frame_count = 3; // If noise_filename is not found, few initial frames of original file will be used as noise reference
 	frames = frame_generator(filename, noise_filename, noise_frame_count);
@@ -334,11 +600,13 @@ int recognize(string filename){
 		cout << endl << "RECOGNITION FAILED :: recognize :: Minimum frame limits reached :: frame_generator output size is too low" << endl << endl;
 		return 0;
 	}
+
 	cepstral = cepstral_generator(frames);
 	cout << endl << "Writing cepstral coefficient to recognition_cepstral.csv . . ." << endl;
 	write_2d_csv_log(cepstral, "recognition_cepstral.csv");
-
-
+	cout << endl << "OUTPUT SAVED IN CSV" << endl << endl;
+	codebook = codebook_generator(cepstral);
+	//observation_sequence = observation_generator(codebook, cepstral);
 	return 0;
 }
 
@@ -356,6 +624,8 @@ int _tmain(int argc, _TCHAR* argv[])
 			cout << endl << "Enter filename : " << endl;
 			cin >> recog_filename;
 			recognize(recog_filename);
+
+
 			break;
 		case 2:
 			//train();
@@ -368,45 +638,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			break;
 		}
 	}
-	/*
-	string filename1, filename2;
-	char data[100];
-	int x;
 
-
-	cout << endl << "SAVING OUTPUT . . ." << endl;
-	myfile.open(filename1);
-	for (int i = 0; i <= 18; i++){
-	myfile << "c[" << i << "],";
-	}
-	myfile << "\n";
-
-	cout << endl << "READING VOICE DATA . . . " << endl;
-	temp.clear();
-	ofstream out("out.txt");
-	int sample_count = 1;
-	for (int i = 0; i < v.size(); i++){
-	int M = 320;
-	int m = i % 320;
-	float w_m = 0.54 - 0.46*cos(2 * M_PI * m / M);
-	temp.push_back(v[i] * w_m);
-	out << v[i] * w_m << endl;
-	sample_count++;
-	if (sample_count == 320){
-	cout << endl << "Passing frame . . . " << endl;
-	find_cepstral(temp);
-	temp.clear();
-	sample_count = 1;
-	// ----------------------------------- //
-	//break;
-	}
-	}
-
-	cout << endl << "OUTPUT SAVED IN CSV" << endl;
-	myfile.close();
-
-
-	*/
 
 	cout << endl << endl;
 	system("pause");
