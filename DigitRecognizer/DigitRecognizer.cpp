@@ -317,9 +317,25 @@ int write_2d_csv_log(vector<vector<double>> data, string filename){
 	if (logstream){
 		for (int i = 0; i < data.size(); i++){
 			for (int j = 0; j < data[i].size(); j++){
-				logstream << std::fixed << std::setprecision(30) << data[i][j] << ",";
+				logstream << std::fixed << std::setprecision(30) << data[i][j] << ", ";
 			}
 			logstream << "\n";
+		}
+		logstream.close();
+		return 1;
+	}
+	else {
+		return 0;
+	}
+}
+
+int write_1d_csv_log(vector<int> data, string filename){
+	ofstream logstream;
+	logstream.open(filename);
+	logstream.precision(30);
+	if (logstream){
+		for (int i = 0; i < data.size(); i++){
+			logstream << std::fixed << std::setprecision(30) << data[i] << ", ";
 		}
 		logstream.close();
 		return 1;
@@ -537,27 +553,15 @@ vector<vector<double>> LBG(vector<vector<double>> codebook, vector<vector<double
 	return new_codebook;
 }
 
-vector<vector<double>> codebook_generator(vector<vector<double>> cepstral){
+vector<vector<double>> codebook_generator(vector<vector<double>> modified_cepstral){
 	cout << endl << "INITIATING CODEBOOK GENERATION :: LBG" << endl;
 	int M = 32; //maximum number of codebook vectors
 	double threshold = (double)0.01;
 	double epsilon = (double)0.03;
 	int max_loop = 10;
 	vector<vector<double>> training_data, init_centroid, codebook;
-	
-	// cepstral contains c[0] to c[18]; remove c[0], c[13], ... , c[18]
-	vector<double> modified_c;
-	for (int i = 0; i < cepstral.size(); i++){
-		//refine ci vector
-		for (int j = 1; j <= 12; j++){
-			modified_c.push_back(cepstral[i][j]);
-		}
-		//push_back training data
-		training_data.push_back(modified_c);
-		modified_c.clear();
-	}
-	cout << endl << "Generated training data." << endl;
-	write_2d_csv_log(training_data, "recog_training_data.csv");
+	training_data = modified_cepstral;
+
 
 	//equally likely random centroid generation
 	cout << endl << "SELECTING AN INITIAL RANDOM CENTROID . . ." << endl;
@@ -590,6 +594,26 @@ vector<vector<double>> codebook_generator(vector<vector<double>> cepstral){
 	return codebook;
 }
 
+// Generate observation sequence with states 1, 2, 3, .... , 32
+vector<int> observation_generator(vector<vector<double>> codebook, vector<vector<double>> cepstral){
+	vector<int> obs;
+	int min_i = 0;
+	double min = 9999, temp_dist;
+	for (int i = 0; i < cepstral.size(); i++){
+		min_i = 0;
+		min = 9999;
+		for (int j = 0; j < codebook.size(); j++){
+			temp_dist = distance(cepstral[i], codebook[j], cepstral[i].size());
+			if (temp_dist < min){
+				min = temp_dist;
+				min_i = (j + 1);
+			}
+		}
+		obs.push_back(min_i);
+	}
+	return obs;
+}
+
 int recognize(string filename){
 	vector<vector<double>> frames, cepstral, codebook;
 	vector<int> observation_sequence;
@@ -605,8 +629,33 @@ int recognize(string filename){
 	cout << endl << "Writing cepstral coefficient to recognition_cepstral.csv . . ." << endl;
 	write_2d_csv_log(cepstral, "recognition_cepstral.csv");
 	cout << endl << "OUTPUT SAVED IN CSV" << endl << endl;
-	codebook = codebook_generator(cepstral);
-	//observation_sequence = observation_generator(codebook, cepstral);
+
+	vector<vector<double>> modified_cepstral;
+	// cepstral contains c[0] to c[18]; remove c[0], c[13], ... , c[18]
+	vector<double> modified_c;
+	for (int i = 0; i < cepstral.size(); i++){
+		//refine ci vector
+		for (int j = 1; j <= 12; j++){
+			modified_c.push_back(cepstral[i][j]);
+		}
+		modified_cepstral.push_back(modified_c);
+		modified_c.clear();
+	}
+	cout << endl << "Generated training data for LBG." << endl;
+	write_2d_csv_log(modified_cepstral, "recog_training_data.csv");
+
+	// Generate codebook
+	codebook = codebook_generator(modified_cepstral);
+
+	// Generate observation sequence
+	cout << endl << "Generating Observation Sequence" << endl;
+	observation_sequence = observation_generator(codebook, modified_cepstral);
+	cout << endl << "Generated Observation Sequence" << endl;
+	write_1d_csv_log(observation_sequence, "recog_observation_seq.csv");
+	cout << endl << "Observation Sequence Saved in .csv" << endl;
+
+	// Run HMM
+
 	return 0;
 }
 
