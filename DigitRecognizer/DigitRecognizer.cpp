@@ -17,7 +17,8 @@ using namespace std;
 
 #define MAX_DISTORTION 9999
 int NORM_CONSTANT = 10000;
-double THRESHOLD_CONSTANT = 10;
+double ZCR_THRESHOLD_CONSTANT = 10;
+double ENERGY_THRESHOLD_CONSTANT = 100;
 int FRAME_SIZE = 320;
 
 //vector<float> v, temp, noise;
@@ -191,7 +192,8 @@ double find_normalization_coefficient(vector<double> voice){
 	return (double)NORM_CONSTANT / max;
 }
 
-vector<vector<double>> frame_generator(string filename, string noise_filename, int noise_frame_count){
+// Ignore first x frames
+vector<vector<double>> frame_generator(string filename, string noise_filename, int noise_frame_count, int ignore_frame_offset){
 	vector<vector<double>> frames;
 	vector<double> voice, noise;
 	double voice_dc_coeff, voice_norm_coeff;
@@ -207,13 +209,17 @@ vector<vector<double>> frame_generator(string filename, string noise_filename, i
 		return frames;
 	}
 	if (!noise_stream){
-		cout << endl << "LOG ERROR : frame_generator :: noise_stream :: file does not exist :: " + noise_filename << endl;
+		//cout << endl << "LOG ERROR : frame_generator :: noise_stream :: file does not exist :: " + noise_filename << endl;
 	}
 
 	// Generate frames
 	// Read data
 	int data;
 	if (!noise_stream){
+		// ignore first x frames
+		for (int i = 0; i < ignore_frame_offset * FRAME_SIZE; i++){
+			frame_stream >> data;
+		}
 		// x frames of 320 samples selected as noise
 		for (int i = 0; i < noise_frame_count * FRAME_SIZE; i++){
 			frame_stream >> data;
@@ -231,12 +237,12 @@ vector<vector<double>> frame_generator(string filename, string noise_filename, i
 			voice.push_back(data);
 		}
 	}
-	cout << "Noise samples count = " << noise.size() << " || Voice samples count = " << voice.size() << endl;
+	//cout << "Noise samples count = " << noise.size() << " || Voice samples count = " << voice.size() << endl;
 	// Find DC coefficient and Normalization constant
 	voice_dc_coeff = find_DC_coefficient(voice);
 	voice_norm_coeff = find_normalization_coefficient(voice);
-	cout << endl << "DC coefficient = " << voice_dc_coeff << endl;
-	cout << "Normalization coefficient = " << voice_norm_coeff << " || Max value ~~ " << (int)NORM_CONSTANT / voice_norm_coeff << endl;
+	//cout << endl << "DC coefficient = " << voice_dc_coeff << endl;
+	//cout << "Normalization coefficient = " << voice_norm_coeff << " || Max value ~~ " << (int)NORM_CONSTANT / voice_norm_coeff << endl;
 	for (int i = 0; i < noise.size(); i++){
 		noise[i] = (double)((noise[i] - voice_dc_coeff) * voice_norm_coeff);
 	}
@@ -247,29 +253,29 @@ vector<vector<double>> frame_generator(string filename, string noise_filename, i
 	// Find average energy and zcr of noise
 	noise_energy_avg = calculate_energy(noise);
 	noise_zcr_avg = calculate_zcr(noise);
-	energy_threshold = THRESHOLD_CONSTANT * noise_energy_avg;
-	zcr_threshold = THRESHOLD_CONSTANT * noise_zcr_avg;
-	cout << endl << "Noise average energy per frame : " << (int)noise_energy_avg << endl;
-	cout << endl << "Noise average ZCR per frame : " << noise_zcr_avg << endl;
-	cout << endl << "Energy threshold : " << (int)energy_threshold << endl;
-	cout << endl << "ZCR threshold : " << zcr_threshold << endl;
+	energy_threshold = ENERGY_THRESHOLD_CONSTANT * noise_energy_avg;
+	zcr_threshold = ZCR_THRESHOLD_CONSTANT * noise_zcr_avg;
+	//cout << endl << "Noise average energy per frame : " << (int)noise_energy_avg << endl;
+	//cout << endl << "Noise average ZCR per frame : " << noise_zcr_avg << endl;
+	//cout << endl << "Energy threshold : " << (int)energy_threshold << endl;
+	//cout << endl << "ZCR threshold : " << zcr_threshold << endl;
 
 	// Generate frames
 	vector<double> current_frame;
-	int frame_count = 1;
+	int frame_count = 1 + noise_frame_count + ignore_frame_offset;
 	for (int i = 0; i < voice.size(); i++){
 		if (current_frame.size() >= FRAME_SIZE){
 			if (calculate_energy(current_frame) > energy_threshold){
 				frames.push_back(current_frame);
-				cout << "Frame no : " << frame_count << "  Energy over threshold. Energy = " << calculate_energy(current_frame) << " ; ZCR = " << calculate_zcr(current_frame) << endl;
+				//cout << "Frame no : " << frame_count << "  Energy over threshold. Energy = " << calculate_energy(current_frame) << " ; ZCR = " << calculate_zcr(current_frame) << endl;
 			}
 			else {
 				if (calculate_zcr(current_frame) > zcr_threshold){
 					frames.push_back(current_frame);
-					cout << "Frame no : " << frame_count << "  ZCR over threshold. Energy = " << calculate_energy(current_frame) << " ; ZCR = " << calculate_zcr(current_frame) << endl;
+					//cout << "Frame no : " << frame_count << "  ZCR over threshold. Energy = " << calculate_energy(current_frame) << " ; ZCR = " << calculate_zcr(current_frame) << endl;
 				}
 				else{
-					cout << "Frame no : " << frame_count << "  Low energy and ZCR. Energy = " << calculate_energy(current_frame) << " ; ZCR = " << calculate_zcr(current_frame) << endl;
+					//cout << "Frame no : " << frame_count << "  Low energy and ZCR. Energy = " << calculate_energy(current_frame) << " ; ZCR = " << calculate_zcr(current_frame) << endl;
 				}
 			}
 			frame_count++;
@@ -304,14 +310,14 @@ vector<vector<double>> cepstral_generator(vector<vector<double>> frames){
 	vector<vector<double>> c, hammed_frames;
 
 	// Apply hamming window
-	cout << endl << "Applying hamming window over all voice frames . . ." << endl;
+	//cout << endl << "Applying hamming window over all voice frames . . ." << endl;
  	hammed_frames = hamming_window_applier(frames);
 
-	cout << endl << "Generating cepstral coefficients . . ." << endl;
+	//cout << endl << "Generating cepstral coefficients . . ." << endl;
 	for (int i = 0; i < hammed_frames.size(); i++){
 		c.push_back(find_cepstral(hammed_frames[i]));
 	}
-	cout << "Generated cepstral coefficients." << endl << endl;
+	//cout << "Generated cepstral coefficients." << endl << endl;
 	return c;
 }
 
@@ -375,6 +381,7 @@ vector<vector<double>> KMeans(vector<vector<double>> codebook, vector<vector<dou
 	vector<vector<vector<double>>> cluster;
 
 	//initialize clusters
+	cout << "Initialize clusters"  << endl;
 	for (int i = 0; i < M; i++){
 		vector<double> temp_c;
 		vector<vector<double>> temp_i;
@@ -384,6 +391,7 @@ vector<vector<double>> KMeans(vector<vector<double>> codebook, vector<vector<dou
 	}
 
 	//find min distance and assign clusters
+	cout << "find min distance and assign clusters" << endl;
 	for (int i = 0; i < L; i++){
 		int min_codeword = 0;
 		min_distance = 9999;
@@ -406,11 +414,13 @@ vector<vector<double>> KMeans(vector<vector<double>> codebook, vector<vector<dou
 
 	//store total minimum distance for each cluster
 	double total_distance = 0;
+	cout << "for each cluster find new centroid" << endl;
 	//for each cluster find new centroid
 	for (int i = 0; i < M; i++){
 		vector<double> new_centroid = new_codebook[i];
 		min_distance = 9999;
 		//find min distance
+		cout << "find min distance " + to_string(M) << endl;
 		for (int j = 1; j < cluster[i].size(); j++){
 			double curr_distance = 0;
 			for (int k = 1; k < cluster[i].size(); k++){
@@ -434,7 +444,7 @@ vector<vector<double>> KMeans(vector<vector<double>> codebook, vector<vector<dou
 	// Generate Log file
 	// log file should contain the various intermediate outputs like the no. of vectors that are allotted
 	// to each cluster as you go through the algorithm. Also the distortion for the current codebook at that time.
-	ofstream outfile;
+	/*ofstream outfile;
 	outfile.open("log_" + to_string(codebook.size()) + "_" + to_string(loop_count) + ".txt");
 	outfile.precision(18);
 	outfile << "Distortion for the current codebook : " << avg_dist << endl;
@@ -449,7 +459,7 @@ vector<vector<double>> KMeans(vector<vector<double>> codebook, vector<vector<dou
 		outfile << endl;
 
 	}
-	outfile.close();
+	outfile.close();*/
 
 
 	//print output
@@ -978,7 +988,8 @@ int recognize(string filename){
 	vector<int> observation_sequence;
 	string noise_filename = "noise.txt";
 	int noise_frame_count = 3; // If noise_filename is not found, few initial frames of original file will be used as noise reference
-	frames = frame_generator(filename, noise_filename, noise_frame_count);
+	int ignore_frame_offset = 10; // ignore first 10 frames
+	frames = frame_generator(filename, noise_filename, noise_frame_count, ignore_frame_offset);
 	if (frames.size() < 5){
 		cout << endl << "RECOGNITION FAILED :: recognize :: Minimum frame limits reached :: frame_generator output size is too low" << endl << endl;
 		return 0;
@@ -1020,13 +1031,117 @@ int recognize(string filename){
 	return 0;
 }
 
+int train_generate_universe(){
+	//vector<string> files = { "Recorded\\seven\\70.txt", "Recorded\\seven\\71.txt", "Recorded\\zero\\00.txt", "Recorded\\zero\\01.txt", "Recorded\\one\\10.txt", "Recorded\\one\\11.txt" };
+	vector<string > number_str = { "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
+	vector <string> files;
+	for (int i = 0; i < number_str.size(); i++){
+		if (i != 2){
+			for (int j = 0; j <= 24; j++){
+				string str = "Recorded\\" + number_str[i] + "\\" + to_string(i) + to_string(j) + ".txt";
+				files.push_back(str);
+			}
+		}
+		else{
+			for (int j = 0; j <= 24; j++){
+				string str = "Recorded\\" + number_str[i] + "\\1" + to_string(j) + ".txt";
+				files.push_back(str);
+			}
+		}
+	}
+
+	
+	vector<vector<double>> frames, cepstral, codebook, cepstral_universe;
+	vector<int> observation_sequence;
+	string noise_filename = "noise.txt";
+	int noise_frame_count = 3; // If noise_filename is not found, few initial frames of original file will be used as noise reference
+	int ignore_frame_offset = 10; // ignore first 10 frames
+
+	for (int i = 0; i < files.size(); i++){
+		cout << endl << "Filename : " << files[i] << endl;
+		frames = frame_generator(files[i], noise_filename, noise_frame_count, ignore_frame_offset);
+		if (frames.size() < 5){
+			cout << endl << "TRAINING MODULE WARNING :: Minimum frame limits reached :: filename = " << files[i] << endl << endl;
+		}
+		cepstral = cepstral_generator(frames);
+		cepstral_universe.insert(cepstral_universe.end(), cepstral.begin(), cepstral.end());
+	}
+
+	cout << endl << "Writing cepstral universe to cepstral_universe.csv . . ." << endl;
+	write_2d_csv_log(cepstral_universe, "cepstral_universe.csv");
+	cout << endl << "OUTPUT SAVED IN CSV :: cepstral_universe.csv" << endl << endl;
+
+	vector<vector<double>> modified_cepstral_universe;
+	// cepstral contains c[0] to c[18]; remove c[0], c[13], ... , c[18]
+	vector<double> modified_c;
+	for (int i = 0; i < cepstral_universe.size(); i++){
+		//refine ci vector
+		for (int j = 1; j <= 12; j++){
+			modified_c.push_back(cepstral_universe[i][j]);
+		}
+		modified_cepstral_universe.push_back(modified_c);
+		modified_c.clear();
+	}
+	cout << endl << "Modified cepstral coefficients" << endl << endl;
+	write_2d_csv_log(modified_cepstral_universe, "modified_cepstral_universe.csv");
+	cout << endl << "OUTPUT SAVED IN CSV :: modified_cepstral_universe.csv" << endl << endl;
+
+	return 1;
+}
+
+vector<vector<double>> read_2d_csv_log(string filename, int column_size){
+	vector<vector<double>> v;
+	ifstream logstream;
+	logstream.open(filename);
+	logstream.precision(30);
+	double data;
+	char ch;
+	vector<double> temp;
+	if (logstream){
+		while (logstream >> data){
+			logstream >> ch;
+			temp.push_back(data);
+			for (int i = 0; i < column_size - 1; i++){
+				logstream >> data;
+				logstream >> ch;
+				temp.push_back(data);
+			}
+			v.push_back(temp);
+			temp.clear();
+		}
+		
+		return v;
+	}
+	else {
+		cout << endl << "FATAL ERROR :: read_2d_csv_log :: Empty output/No such file :: " + filename << endl << endl;
+		return v;
+	}
+}
+
+int train_generate_codebook(){
+	string modified_cepstral_universe_filename = "modified_cepstral_universe.csv";
+	vector<vector<double>> modified_cepstral_universe, codebook;
+
+	// read modified_cepstral_universe
+	cout << endl << "Reading modified_cepstral_universe.csv" << endl;
+	modified_cepstral_universe = read_2d_csv_log(modified_cepstral_universe_filename, 12);
+
+	// Generate codebook
+	cout << endl << "GENERATING CODEBOOK . . ." << endl;
+	codebook = codebook_generator(modified_cepstral_universe);
+	write_2d_csv_log(codebook, "trained_codebook.csv");
+
+	cout << endl << "Codebook generation complete" << endl;
+	return 1;
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
 	cout << endl << "\t*** DIGIT RECOGNIZER ***\t" << endl;
 	int t = 1;
 	string recog_filename;
 	while (t){
-		cout << endl << "Enter 1 to RECOGNIZE !\tEnter 2 to TRAIN !\tEnter 0 to EXIT !" << endl;
+		cout << endl << "Enter 1 to RECOGNIZE !\tEnter 2 to GENERATE CEPSTRAL UNIVERSE !\tEnter 3 to GENERATE CODEBOOK\tEnter 0 to EXIT !" << endl;
 		cin >> t;
 		switch (t)
 		{
@@ -1038,7 +1153,10 @@ int _tmain(int argc, _TCHAR* argv[])
 
 			break;
 		case 2:
-			//train();
+			train_generate_universe();
+			break;
+		case 3:
+			train_generate_codebook();
 			break;
 		case 0:
 			//exit();
@@ -1051,7 +1169,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 
 	cout << endl << endl;
-	system("pause");
+	std::system("pause");
 	return 0;
 }
 
