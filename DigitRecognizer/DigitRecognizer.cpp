@@ -381,7 +381,7 @@ vector<vector<double>> KMeans(vector<vector<double>> codebook, vector<vector<dou
 	vector<vector<vector<double>>> cluster;
 
 	//initialize clusters
-	cout << "Initialize clusters"  << endl;
+	cout << "KMeans loop -> " << loop_count << " :: Initialize clusters" << endl;
 	for (int i = 0; i < M; i++){
 		vector<double> temp_c;
 		vector<vector<double>> temp_i;
@@ -391,7 +391,7 @@ vector<vector<double>> KMeans(vector<vector<double>> codebook, vector<vector<dou
 	}
 
 	//find min distance and assign clusters
-	cout << "find min distance and assign clusters" << endl;
+	cout << "KMeans loop -> " << loop_count << " :: Find min distance and assign clusters" << endl << endl;
 	for (int i = 0; i < L; i++){
 		int min_codeword = 0;
 		min_distance = 9999;
@@ -403,6 +403,9 @@ vector<vector<double>> KMeans(vector<vector<double>> codebook, vector<vector<dou
 			}
 		}
 
+		if (i%200 == 0){
+			cout << "KMeans loop -> " << loop_count << " :: Assigned cluster for " << i << "th training data" << endl;
+		}
 		//assign cluster for training_set[i]
 		vector<vector<double>> temp_i;
 		for (int i = 0; i < cluster[min_codeword].size(); i++){
@@ -414,14 +417,18 @@ vector<vector<double>> KMeans(vector<vector<double>> codebook, vector<vector<dou
 
 	//store total minimum distance for each cluster
 	double total_distance = 0;
-	cout << "for each cluster find new centroid" << endl;
+	cout << "KMeans loop -> " << loop_count << " :: For each cluster find new centroid" << endl;
 	//for each cluster find new centroid
 	for (int i = 0; i < M; i++){
 		vector<double> new_centroid = new_codebook[i];
 		min_distance = 9999;
 		//find min distance
-		cout << "find min distance " + to_string(M) << endl;
+		cout << "KMeans loop -> " << loop_count << " :: Find new centroid for " + to_string(i) + "th cluster" << endl << endl;
+		
 		for (int j = 1; j < cluster[i].size(); j++){
+			if (j % 100 == 0){
+				cout << "KMeans loop -> " << loop_count << " :: " << i << "th cluster  " << j << "th element" << endl;
+			}
 			double curr_distance = 0;
 			for (int k = 1; k < cluster[i].size(); k++){
 				curr_distance += distance(cluster[i][j], cluster[i][k], dimension);
@@ -431,6 +438,7 @@ vector<vector<double>> KMeans(vector<vector<double>> codebook, vector<vector<dou
 				new_centroid = cluster[i][j];
 			}
 		}
+
 		//assign new centroid
 		new_codebook[i] = new_centroid;
 		if (min_distance == 9999){
@@ -1033,7 +1041,7 @@ int recognize(string filename){
 
 int train_generate_universe(){
 	//vector<string> files = { "Recorded\\seven\\70.txt", "Recorded\\seven\\71.txt", "Recorded\\zero\\00.txt", "Recorded\\zero\\01.txt", "Recorded\\one\\10.txt", "Recorded\\one\\11.txt" };
-	vector<string > number_str = { "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
+	vector<string > number_str = { "zero", "one"};
 	vector <string> files;
 	for (int i = 0; i < number_str.size(); i++){
 		if (i != 2){
@@ -1141,6 +1149,9 @@ int _tmain(int argc, _TCHAR* argv[])
 	int t = 1;
 	string recog_filename;
 	while (t){
+		clock_t start;
+		double duration;
+		start = clock();
 		cout << endl << "Enter 1 to RECOGNIZE !\tEnter 2 to GENERATE CEPSTRAL UNIVERSE !\tEnter 3 to GENERATE CODEBOOK\tEnter 0 to EXIT !" << endl;
 		cin >> t;
 		switch (t)
@@ -1165,6 +1176,9 @@ int _tmain(int argc, _TCHAR* argv[])
 			t = 1;
 			break;
 		}
+
+		duration = (clock() - start) / (double) CLOCKS_PER_SEC;
+		cout << endl << endl << "TIME TAKEN : " << duration << " seconds" << endl << endl;
 	}
 
 
