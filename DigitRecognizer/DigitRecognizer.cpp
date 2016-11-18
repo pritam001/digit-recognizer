@@ -20,8 +20,13 @@ int NORM_CONSTANT = 10000;
 double THRESHOLD_CONSTANT = 10;
 int FRAME_SIZE = 320;
 
-vector<float> v, temp, noise;
-ofstream logfile;
+//vector<float> v, temp, noise;
+ofstream logstream;
+// N = no of states in the model
+int HMM_N = 5;
+// M = no of distinct observation symbols per state i.e. discrete alphabet size
+int HMM_M = 32;
+int HMM_T = 100;
 
 // Given a frame of 320 samples, return ci (find Ri,ai,ci)
 vector<double> find_cepstral(vector<double> frame){
@@ -614,6 +619,360 @@ vector<int> observation_generator(vector<vector<double>> codebook, vector<vector
 	return obs;
 }
 
+vector<vector<double>> forward_procedure(vector<int> O1, vector<vector<double>> A, vector<vector<double>> B, vector<double> PI){
+	int T1 = O1.size();
+	int N = HMM_N, M = HMM_M;
+	vector<vector<double>> alpha(T1, vector<double>(N, 1));
+	// Initialize
+	//cout << "Initializing..." << endl;
+	for (int i = 0; i < N; i++){
+		alpha[0][i] = (double)((double)PI[i] * (double)B[i][O1[0] - 1]);
+		//cout << "B[" << i << "][" << O1[0] - 1 << "]  ";
+		//cout << PI[i] << " * " << B[i][O1[0] - 1] << " = " << alpha[0][i] << endl;
+	}
+
+	// Induction
+	//cout << "Induction..." << endl;
+	for (int t = 0; t < T1 - 1; t++){
+		for (int j = 0; j < N; j++){
+			alpha[t + 1][j] = 0.0;
+			for (int i = 0; i < N; i++){
+				alpha[t + 1][j] += (double)(alpha[t][i] * A[i][j]);
+				//cout << alpha[t+1][i] << "*" << A[i][j] << endl;
+			}
+			//cout << j << " " << t + 1 << " " << O1[t + 1] << " " << B[j][O1[t + 1] - 1] << endl;
+			//if (alpha[t + 1][j] > 0) cout << alpha[t + 1][j] <<" "<< B[j][O1[t + 1] - 1] << endl;
+			alpha[t + 1][j] = alpha[t + 1][j] * B[j][O1[t + 1] - 1];
+			//cout << alpha[t + 1][j] << endl;
+		}
+	}
+
+	// Termination
+	//cout << "Termination..." << endl;
+	double P_O_given_lambda = 0;
+	for (int i = 0; i < N; i++){
+		P_O_given_lambda += alpha[T1 - 1][i];
+	}
+
+	//cout << "P(O|lambda) = " << P_O_given_lambda << endl;
+	logstream << "P(O|lambda) = " << P_O_given_lambda << endl;
+	return alpha;
+}
+
+vector<vector<double>> backward_procedure(vector<int> O, vector<vector<double>> A, vector<vector<double>> B, vector<double> PI){
+	int T = O.size();
+	int N = HMM_N, M = HMM_M;
+	vector<vector<double>> beta(T, vector<double>(N, 1));
+
+	// Initialization
+	//cout << "Initialization..." << endl;
+	for (int i = 0; i < N; i++){
+		beta[T - 1][i] = 1;
+	}
+
+	// Induction
+	//cout << "Induction..." << endl;
+	for (int t = T - 2; t >= 0; t--){
+		for (int i = 0; i < N; i++){
+			beta[t][i] = 0;
+			for (int j = 0; j < N; j++){
+				beta[t][i] += (A[i][j] * B[j][O[t + 1] - 1] * beta[t + 1][j]);
+			}
+		}
+	}
+
+	// Termination
+	//cout << "Termination..." << endl;
+	double P_O_given_lambda = 0;
+	for (int i = 0; i < N; i++){
+		P_O_given_lambda += beta[0][i] * PI[i] * B[i][O[0] - 1];
+	}
+
+	//cout << "P(O|lambda) = " << P_O_given_lambda << endl;
+
+	return beta;
+}
+
+double viterbi_algorithm(vector<int> O, vector<vector<double>> A, vector<vector<double>> B, vector<double> PI){
+	int N = HMM_N, M = HMM_M;
+	int T = O.size();
+	vector<vector<double>> delta(T, vector<double>(N, 1));
+	vector<vector<double>> shi(T, vector<double>(N, 1));
+
+	// Initialization
+	//cout << "Initialization..." << endl;
+	for (int i = 0; i < N; i++){
+		delta[0][i] = PI[i] * B[i][O[0] - 1];
+		shi[0][i] = 0;
+	}
+
+	// Recursion
+	//cout << "Recursion..." << endl;
+	double max = -1;
+	int max_i = -1;
+	for (int t = 1; t < T; t++){
+		for (int j = 0; j < N; j++){
+			max = delta[t - 1][0] * A[0][j];
+			max_i = 0;
+			for (int i = 0; i < N; i++){
+				if (delta[t - 1][i] * A[i][j] > max){
+					max = delta[t - 1][i] * A[i][j];
+					max_i = i;
+				}
+			}
+			delta[t][j] = max * B[j][O[t] - 1];
+			shi[t][j] = max_i;
+		}
+	}
+
+	// Termination
+	//cout << "Termination..." << endl;
+	double P_star = -1;
+	vector<int> q_star(T, -1);
+	for (int i = 0; i < N; i++){
+		if (delta[T - 1][i] > P_star){
+			P_star = delta[T - 1][i];
+			q_star[T - 1] = i;
+		}
+	}
+
+	// Path Backtracking
+	//cout << "Path Backtracking..." << endl;
+	for (int t = T - 2; t >= 0; t--){
+		q_star[t] = (int)shi[t + 1][q_star[t + 1]];
+	}
+
+	// Output
+	//cout << "Output..." << endl;
+	//cout << "P_star : " << P_star << endl;
+	/*cout << "Q_star :" << endl;
+	for (int i = 0; i < T; i++){
+		cout << q_star[i] << " ";
+	}
+	cout << endl;*/
+	
+
+	// Return delta and phi
+	//vector<vector<vector<double>>> delta_and_shi;
+	//delta_and_shi.push_back(delta);
+	//delta_and_shi.push_back(shi);
+	//return delta_and_shi;
+	return P_star;
+}
+
+vector<vector<vector<double>>> baum_welch(vector<int> O, vector<vector<double>> A, vector<vector<double>> B, vector<double> PI, vector<vector<double>> alpha, vector<vector<double>> beta){
+	int N = HMM_N, M = HMM_M;
+	int T = O.size();
+	//cout << "Calculating Xi..." << endl;
+	vector<vector<vector<double>>> Xi(T, vector<vector<double>>(N, vector<double>(N, 0)));
+	for (int t = 0; t < T - 1; t++){
+		double sum = 0;
+		for (int i = 0; i < N; i++){
+			for (int j = 0; j < N; j++){
+				sum += (alpha[t][i] * A[i][j] * B[j][O[t + 1] - 1] * beta[t + 1][j]);
+			}
+		}
+		for (int i = 0; i < N; i++){
+			for (int j = 0; j < N; j++){
+				Xi[t][i][j] = (alpha[t][i] * A[i][j] * B[j][O[t + 1] - 1] * beta[t + 1][j]) / sum;
+			}
+		}
+	}
+
+	return Xi;
+}
+
+int HMM_optimization(vector<int> O, vector<vector<double>> A, vector<vector<double>> B, vector<double> PI, string extension){
+	int N = HMM_N, M = HMM_M;
+	int T = O.size();
+	vector<vector<double>> A_curr = A, B_curr = B;
+	logstream.open("HMM_P_star" + extension + ".txt");
+	vector<double> PI_curr = PI;
+	double P_star_diff = 1, prev_P_star = -1, P_star = 0;
+	int count = 1;
+
+	while (P_star_diff > 0){
+		// The Forward Procedure
+		//cout << endl << "Initiate Hidden Markov Modelling . . . " << endl;
+		//cout << endl << "Probability evaluation :: Forward procedure . . . " << endl << endl;
+		vector<vector<double>> alpha;
+		alpha = forward_procedure(O, A_curr, B_curr, PI_curr);
+
+		// The Backward Procedure
+		//cout << endl << "Probability evaluation :: Backward procedure . . . " << endl << endl;
+		vector<vector<double>> beta;
+		beta = backward_procedure(O, A_curr, B_curr, PI_curr);
+
+		// Viterbi algo
+		//cout << endl << "Viterbi algorithm :: Looking for optimal state sequence . . . " << endl << endl;
+		/*vector<vector<vector<double>>> delta_n_shi;
+		vector<vector<double>> delta, shi;
+		delta_n_shi = viterbi_algorithm(O, A, B, PI);
+		delta = delta_n_shi[0];
+		shi = delta_n_shi[1];*/
+		P_star = viterbi_algorithm(O, A_curr, B_curr, PI_curr);
+
+		// Parameter estimation
+		//cout << endl << "Baum-Welch Method/Expectation-Maximization Method :: Estimating parameters . . . " << endl << endl;
+		vector<vector<vector<double>>> Xi;
+		Xi = baum_welch(O, A_curr, B_curr, PI_curr, alpha, beta);
+
+		//cout << "Calculating Gamma..." << endl;
+		vector<vector<double>> gamma(T, vector<double>(N, 0));
+		for (int t = 0; t < T; t++){
+			for (int i = 0; i < N; i++){
+				gamma[t][i] = 0;
+				for (int j = 0; j < N; j++){
+					gamma[t][i] += Xi[t][i][j];
+				}
+			}
+		}
+
+		//cout << "Calculating A_bar..." << endl;
+		vector<vector<double>> A_bar(N, vector<double>(N, 0));
+		for (int i = 0; i < N; i++){
+			for (int j = 0; j < N; j++){
+				double sum1 = 0, sum2 = 0;
+				for (int t = 0; t < T - 1; t++){
+					sum1 += Xi[t][i][j];
+					sum2 += gamma[t][i];
+				}
+				A_bar[i][j] = sum1 / sum2;
+			}
+		}
+
+
+		//cout << "Calculating B_bar..." << endl;
+		vector<vector<double>> B_bar(N, vector<double>(M, 0));
+		for (int j = 0; j < N; j++){
+			for (int k = 0; k < M; k++){
+				double sum1 = 0, sum2 = 0;
+				for (int t = 0; t < T - 1; t++){
+					if (O[t] - 1 == k){
+						sum1 += gamma[t][j];
+					}
+					sum2 += gamma[t][j];
+				}
+				B_bar[j][k] = sum1 / sum2;
+			}
+		}
+
+		//cout << "Calculating PI_bar..." << endl;
+		vector<double> PI_bar;
+		for (int i = 0; i < N; i++){
+			PI_bar.push_back(gamma[0][i]);
+		}
+
+		// Find new P_O_given_lambda
+		//cout << endl << "Finding optimized probability..." << endl;
+		forward_procedure(O, A_bar, B_bar, PI_bar);
+
+		A_curr = A_bar;
+		B_curr = B_bar;
+		PI_curr = PI_bar;
+		P_star_diff = P_star - prev_P_star;
+		cout << endl << "Loop " << count << " : P* = " << P_star << " ; P*Diff = " << P_star_diff << endl;
+		logstream << "Loop " << count << " : P* = " << P_star << " ; P*Diff = " << P_star_diff << endl << endl;
+		prev_P_star = P_star;
+		count++;
+	}
+
+	/* Writing in file
+	cout << endl << "Creating new a" + extension + ".txt b" + extension + ".txt pi" + extension + ".txt files..." << endl;
+	string filename_A_bar = "a" + extension + ".txt";
+	string filename_B_bar = "b" + extension + ".txt";
+	string filename_PI_bar = "pi" + extension + ".txt";
+
+	ofstream a_bar_stream, b_bar_stream, pi_bar_stream;
+
+	a_bar_stream.open(filename_A_bar);
+	a_bar_stream.precision(50);
+	for (int i = 0; i < N; i++){
+	for (int j = 0; j < N; j++){
+	a_bar_stream << A_bar[i][j] << " ";
+	}
+	a_bar_stream << "\n";
+	}
+	a_bar_stream.close();
+
+	b_bar_stream.open(filename_B_bar);
+	b_bar_stream.precision(50);
+	for (int j = 0; j < N; j++){
+	for (int k = 0; k < M; k++){
+	b_bar_stream << B_bar[j][k] << " ";
+	}
+	b_bar_stream << "\n";
+	}
+	b_bar_stream.close();
+
+	pi_bar_stream.open(filename_PI_bar);
+	pi_bar_stream.precision(50);
+	for (int i = 0; i < N; i++){
+	pi_bar_stream << PI_bar[i] << " ";
+	}
+	pi_bar_stream.close();
+
+	cout << endl << "Write complete !" << endl << endl;
+	*/
+
+	logstream.close();
+	return 1;
+}
+
+int HMM(vector<int> O, string extension){
+	int N = HMM_N, M = HMM_M, T = O.size();
+	string filename_A = "defaultHMM_A.txt";
+	string filename_B = "defaultHMM_B.txt";
+	string filename_PI = "defaultHMM_PI.txt";
+
+	vector<vector<double>> A, B;
+	vector<double> PI;
+
+	ifstream a_stream;
+	a_stream.open(filename_A);
+	a_stream.precision(500);
+	double a_val;
+	for (int i = 0; i < N; i++){
+		vector<double> temp;
+		for (int j = 0; j < N; j++){
+			a_stream >> a_val;
+			temp.push_back(a_val);
+		}
+		A.push_back(temp);
+	}
+	a_stream.close();
+
+	ifstream b_stream;
+	b_stream.open(filename_B);
+	b_stream.precision(500);
+	double b_val;
+	for (int i = 0; i < N; i++){
+		vector<double> temp;
+		for (int j = 0; j < M; j++){
+			b_stream >> b_val;
+			temp.push_back(b_val);
+		}
+		B.push_back(temp);
+	}
+	b_stream.close();
+
+	ifstream pi_stream;
+	pi_stream.open(filename_PI);
+	pi_stream.precision(500);
+	double pi_val;
+	for (int i = 0; i < N; i++){
+		pi_stream >> pi_val;
+		PI.push_back(pi_val);
+	}
+	pi_stream.close();
+
+	// HMM starts here
+	HMM_optimization(O, A, B, PI, extension);
+	// HMM ends here
+
+	return 0;
+}
+
 int recognize(string filename){
 	vector<vector<double>> frames, cepstral, codebook;
 	vector<int> observation_sequence;
@@ -655,6 +1014,8 @@ int recognize(string filename){
 	cout << endl << "Observation Sequence Saved in .csv" << endl;
 
 	// Run HMM
+	cout << endl << "Initiate Hidden Markov Modelling . . . " << endl;
+	HMM(observation_sequence, "_recog");
 
 	return 0;
 }

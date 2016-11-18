@@ -1,45 +1,45 @@
-﻿Build started 17-Nov-16 6:40:08 AM.
+﻿Build started 18-Nov-16 12:09:13 PM.
      1>Project "C:\Users\Pritam Sarkar\Documents\Visual Studio 2013\Projects\DigitRecognizer\DigitRecognizer\DigitRecognizer.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Yu"stdafx.h" /Fp"Debug\DigitRecognizer.pch" /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt DigitRecognizer.cpp
          DigitRecognizer.cpp
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(88): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(105): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(93): warning C4018: '<' : signed/unsigned mismatch
      1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(110): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(121): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(122): warning C4244: '+=' : conversion from 'double' to '__int64', possible loss of data
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(137): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(173): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(181): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(235): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(238): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(255): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(256): warning C4018: '>=' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(286): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(287): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(306): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(318): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(319): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(337): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(395): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(398): warning C4258: 'i' : definition from the for loop is ignored; the definition from the enclosing scope is used
-                 c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(395) : definition of 'i' ignored
-                 c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(382) : definition of 'i' used
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(409): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(411): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(438): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(439): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(481): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(502): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(505): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(530): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(531): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(544): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(583): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(584): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(602): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(605): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(636): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(115): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(126): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(127): warning C4244: '+=' : conversion from 'double' to '__int64', possible loss of data
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(142): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(178): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(186): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(240): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(243): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(260): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(261): warning C4018: '>=' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(291): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(292): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(311): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(323): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(324): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(342): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(400): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(403): warning C4258: 'i' : definition from the for loop is ignored; the definition from the enclosing scope is used
+                 c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(400) : definition of 'i' ignored
+                 c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(387) : definition of 'i' used
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(414): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(416): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(443): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(444): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(486): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(507): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(510): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(535): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(536): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(549): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(588): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(589): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(607): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(610): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\pritam sarkar\documents\visual studio 2013\projects\digitrecognizer\digitrecognizer\digitrecognizer.cpp(995): warning C4018: '<' : signed/unsigned mismatch
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Pritam Sarkar\Documents\Visual Studio 2013\Projects\DigitRecognizer\Debug\DigitRecognizer.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\Pritam Sarkar\Documents\Visual Studio 2013\Projects\DigitRecognizer\Debug\DigitRecognizer.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Pritam Sarkar\Documents\Visual Studio 2013\Projects\DigitRecognizer\Debug\DigitRecognizer.lib" /MACHINE:X86 Debug\DigitRecognizer.obj
          Debug\stdafx.obj
@@ -48,4 +48,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.10
+Time Elapsed 00:00:01.26
