@@ -1,0 +1,72 @@
+P(O|lambda) = 2.18953e-047
+P(O|lambda) = 5.63208e-022
+Loop 1 : P* = 3.50325e-050 ; P*Diff = 1
+
+P(O|lambda) = 5.63208e-022
+P(O|lambda) = 6.17004e-018
+Loop 2 : P* = 1.34673e-024 ; P*Diff = 1.34673e-024
+
+P(O|lambda) = 6.17004e-018
+P(O|lambda) = 6.75579e-017
+Loop 3 : P* = 1.5277e-019 ; P*Diff = 1.52768e-019
+
+P(O|lambda) = 6.75579e-017
+P(O|lambda) = 1.53119e-016
+Loop 4 : P* = 5.46148e-018 ; P*Diff = 5.30871e-018
+
+P(O|lambda) = 1.53119e-016
+P(O|lambda) = 2.22752e-016
+Loop 5 : P* = 2.20162e-017 ; P*Diff = 1.65547e-017
+
+P(O|lambda) = 2.22752e-016
+P(O|lambda) = 2.72526e-016
+Loop 6 : P* = 4.26964e-017 ; P*Diff = 2.06802e-017
+
+P(O|lambda) = 2.72526e-016
+P(O|lambda) = 3.22578e-016
+Loop 7 : P* = 7.29736e-017 ; P*Diff = 3.02771e-017
+
+P(O|lambda) = 3.22578e-016
+P(O|lambda) = 3.87228e-016
+Loop 8 : P* = 1.2611e-016 ; P*Diff = 5.31364e-017
+
+P(O|lambda) = 3.87228e-016
+P(O|lambda) = 4.60302e-016
+Loop 9 : P* = 2.07e-016 ; P*Diff = 8.08901e-017
+
+P(O|lambda) = 4.60302e-016
+P(O|lambda) = 5.17555e-016
+Loop 10 : P* = 3.07967e-016 ; P*Diff = 1.00967e-016
+
+P(O|lambda) = 5.17555e-016
+P(O|lambda) = 5.5039e-016
+Loop 11 : P* = 3.99032e-016 ; P*Diff = 9.10646e-017
+
+P(O|lambda) = 5.5039e-016
+P(O|lambda) = 5.68778e-016
+Loop 12 : P* = 4.62206e-016 ; P*Diff = 6.31741e-017
+
+P(O|lambda) = 5.68778e-016
+P(O|lambda) = 5.80313e-016
+Loop 13 : P* = 5.02815e-016 ; P*Diff = 4.0609e-017
+
+P(O|lambda) = 5.80313e-016
+P(O|lambda) = 5.88212e-016
+Loop 14 : P* = 5.28733e-016 ; P*Diff = 2.59182e-017
+
+P(O|lambda) = 5.88212e-016
+P(O|lambda) = 5.94127e-016
+Loop 15 : P* = 5.44626e-016 ; P*Diff = 1.58927e-017
+
+P(O|lambda) = 5.94127e-016
+P(O|lambda) = 5.99075e-016
+Loop 16 : P* = 5.5331e-016 ; P*Diff = 8.68448e-018
+
+P(O|lambda) = 5.99075e-016
+P(O|lambda) = 6.03732e-016
+Loop 17 : P* = 5.56483e-016 ; P*Diff = 3.17328e-018
+
+P(O|lambda) = 6.03732e-016
+P(O|lambda) = 6.08562e-016
+Loop 18 : P* = 5.55078e-016 ; P*Diff = -1.40498e-018
+

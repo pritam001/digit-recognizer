@@ -1,0 +1,12 @@
+P(O|lambda) = 7.17465e-043
+P(O|lambda) = 1.94194e-017
+Loop 1 : P* = 1.73472e-045 ; P*Diff = 1
+
+P(O|lambda) = 1.94194e-017
+P(O|lambda) = 3.0628e-019
+Loop 2 : P* = 4.50664e-020 ; P*Diff = 4.50664e-020
+
+P(O|lambda) = 3.0628e-019
+P(O|lambda) = 1.42222e-021
+Loop 3 : P* = 1.76241e-020 ; P*Diff = -2.74423e-020
+
