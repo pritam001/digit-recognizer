@@ -16,10 +16,13 @@
 using namespace std;
 
 #define MAX_DISTORTION 9999
+#define SMALL_VALUE pow(10,-20)
 int NORM_CONSTANT = 10000;
 double ZCR_THRESHOLD_CONSTANT = 10;
 double ENERGY_THRESHOLD_CONSTANT = 100;
 int FRAME_SIZE = 320;
+vector<double> TOKHURA_WEIGHT = {1,3,5,9,13,18,25,32,40,49,55,62};
+bool USING_TOKHURA = false;
 
 //vector<float> v, temp, noise;
 ofstream logstream;
@@ -29,10 +32,10 @@ int HMM_N = 5;
 int HMM_M = 32;
 int HMM_T = 100;
 
-string CODEBOOK_NAME = "codebook.csv";
-vector< string > WORD_LIST = { "zero", "one", "two", "three" };
+string CODEBOOK_NAME = "complete_euclidean_codebook.csv";
+vector<string> WORD_LIST = { "zero", "one", "two", "three", "four", "five" };
 int READ_START_NUM = 0;
-int READ_END_NUM = 6;
+int READ_END_NUM = 5;
 
 // HMM data structure
 struct hmm_data{
@@ -384,13 +387,22 @@ int write_1d_csv_log(vector<double> data, string filename){
 	}
 }
 
-//find euclidean distance between "a" and "b" vector with a.size() = b.size() = dimension
-double distance(vector<double> a, vector<double> b, int dimension){
-	double distance = 0;
-	for (int i = 0; i < dimension; i++){
-		distance += (a[i] - b[i])*(a[i] - b[i]);
+//find euclidean or tokhura distance between "a" and "b" vector with a.size() = b.size() = dimension
+double distance(vector<double> a, vector<double> b, int dimension, bool tokhura = USING_TOKHURA){
+	if (!tokhura){
+		double distance = 0;
+		for (int i = 0; i < dimension; i++){
+			distance += (a[i] - b[i])*(a[i] - b[i]);
+		}
+		return sqrt(distance);
 	}
-	return sqrt(distance);
+	else {
+		double distance = 0;
+		for (int i = 0; i < dimension; i++){
+			distance += TOKHURA_WEIGHT[i]*(a[i] - b[i])*(a[i] - b[i]);
+		}
+		return sqrt(distance);
+	}
 }
 
 //codebook = stores all the M centroids :: vector<vector<double>>
@@ -869,6 +881,8 @@ vector<vector<vector<double>>> baum_welch(vector<int> O, vector<vector<double>> 
 			write_2d_csv_log(A, "baum_welch_zero_error_A.csv");
 			write_2d_csv_log(B, "baum_welch_zero_error_B.csv");
 			write_2d_csv_log(beta, "baum_welch_zero_error_beta.csv");*/
+			// Debug sum == 0 problem
+			sum = SMALL_VALUE;
 		}
 		for (int i = 0; i < N; i++){
 			for (int j = 0; j < N; j++){
@@ -938,6 +952,8 @@ hmm_data* HMM_optimization(vector<int> O, vector<vector<double>> A, vector<vecto
 				}
 				if (sum2 == 0){
 					cout << "Error :: hmm_opt :: calculate a_bar :: sum2 == 0" << endl;
+					// debug sum2 == 0
+					//sum2 = SMALL_VALUE;
 				}
 				A_bar[i][j] = sum1 / sum2;
 			}
@@ -957,6 +973,8 @@ hmm_data* HMM_optimization(vector<int> O, vector<vector<double>> A, vector<vecto
 				}
 				if (sum2 == 0){
 					cout << "Error :: hmm_opt :: calculate b_bar :: sum2 == 0" << endl;
+					// debug sum2 == 0
+					//sum2 = SMALL_VALUE;
 				}
 				B_bar[j][k] = sum1 / sum2;
 			}
